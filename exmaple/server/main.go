@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	version string = "2017-02-21"
+	version string = "2017-04-21"
 )
 
 func init() {

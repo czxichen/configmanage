@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -21,10 +22,39 @@ var (
 	fileHandler http.RequestHandler
 )
 
-func Server() error {
+func Server(args []string) bool {
+	if err := FlagSet.Parse(args); err != nil {
+		return false
+	}
+
+	if cpath != "" {
+		readconfig(cpath, &Cfg)
+	}
+
+	Cfg.Download = strings.Replace(Cfg.Download, "\\", "/", -1)
+	if !strings.HasSuffix(Cfg.Download, "/") {
+		Cfg.Download += "/"
+	}
+
+	File, err := os.Create(Cfg.Logname)
+	if err != nil {
+		log.Printf("创建日志文件失败:%s\n", err.Error())
+		return true
+	}
+	log.SetOutput(File)
+
+	Templatedir = Cfg.Download + "template/"
+	Parseconfig()
+
+	go Notify(Templatedir, 10, func() {
+		Parseconfig()
+	})
+
 	fs := &http.FS{Root: Cfg.Download, AcceptByteRange: true}
 	fileHandler = fs.NewRequestHandler()
-	return listen(Cfg.Proto, Cfg.IP, Cfg.CrtPath, Cfg.Keypath, Cfg.Logname)
+	err = listen(Cfg.Proto, Cfg.IP, Cfg.CrtPath, Cfg.Keypath, Cfg.Logname)
+	log.Printf("监听服务失败:%s\n", err.Error())
+	return true
 }
 
 func listen(proto, ip, crt, key, logname string) (err error) {

@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/spf13/cobra"
 	http "github.com/valyala/fasthttp"
 )
 
@@ -22,11 +23,7 @@ var (
 	fileHandler http.RequestHandler
 )
 
-func Server(args []string) bool {
-	if err := FlagSet.Parse(args); err != nil {
-		return false
-	}
-
+func Server(cmd *cobra.Command, args []string) error {
 	if cpath != "" {
 		readconfig(cpath, &Cfg)
 	}
@@ -39,7 +36,7 @@ func Server(args []string) bool {
 	File, err := os.Create(Cfg.Logname)
 	if err != nil {
 		log.Printf("创建日志文件失败:%s\n", err.Error())
-		return true
+		return nil
 	}
 	log.SetOutput(File)
 
@@ -54,7 +51,7 @@ func Server(args []string) bool {
 	fileHandler = fs.NewRequestHandler()
 	err = listen(Cfg.Proto, Cfg.IP, Cfg.CrtPath, Cfg.Keypath, Cfg.Logname)
 	log.Printf("监听服务失败:%s\n", err.Error())
-	return true
+	return nil
 }
 
 func listen(proto, ip, crt, key, logname string) (err error) {

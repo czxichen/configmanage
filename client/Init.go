@@ -2,12 +2,12 @@ package client
 
 import (
 	"encoding/json"
-	"flag"
 	"log"
 	"os"
 	"strings"
 
 	"github.com/czxichen/command/parse"
+	"github.com/spf13/cobra"
 )
 
 type clientConfig struct {
@@ -28,26 +28,26 @@ var (
 )
 
 var (
-	File    *os.File
-	FlagSet = flag.FlagSet{Usage: func() {}}
+	File         *os.File
+	DeployClient = &cobra.Command{
+		Use:   "client",
+		Short: "快速部署客户端",
+		Run:   Client,
+	}
 )
 
 func init() {
-	FlagSet.StringVar(&cfgpath, "f", "", "指定配置文件 -f cfg.json")
-	FlagSet.StringVar(&CfgName, "n", "", "只更新指定服务端配置文件 -n system-cofnig.xml 结合-a getcfg使用")
-	FlagSet.StringVar(&Config.Action, "a", "", "指定要做的操作 -a install、getcfg")
-	FlagSet.StringVar(&Config.MasteUrl, "m", "127.0.0.1:1789", "指定服务端IP端口 -m 127.0.0.1:1789")
-	FlagSet.StringVar(&Config.RequestMode, "r", "http", "指定请求的模式 -r https")
-	FlagSet.StringVar(&Config.Home, "p", "/test", "指定解压的根目录 -p /test")
-	FlagSet.BoolVar(&Config.CheckMd5, "M", true, "是否检查文件md5 -M true")
-	FlagSet.StringVar(&Config.Primary, "P", "", "指定请求的关键字 -P 7400001")
+	DeployClient.PersistentFlags().StringVarP(&cfgpath, "config", "c", "", "指定配置文件")
+	DeployClient.PersistentFlags().StringVarP(&CfgName, "new", "n", "", "只更新指定服务端配置文件 -n system-cofnig.xml 结合-a getcfg使用")
+	DeployClient.PersistentFlags().StringVarP(&Config.Action, "action", "a", "", "指定要做的操作 -a install|getcfg")
+	DeployClient.PersistentFlags().StringVarP(&Config.MasteUrl, "master", "m", "127.0.0.1:1789", "指定服务端IP端口")
+	DeployClient.PersistentFlags().StringVarP(&Config.RequestMode, "proto", "p", "http", "指定通信协议http|https")
+	DeployClient.PersistentFlags().StringVarP(&Config.Home, "home", "H", "./", "指定主目录")
+	DeployClient.PersistentFlags().BoolVarP(&Config.CheckMd5, "md5sum", "M", true, "检查主包的md5值")
+	DeployClient.PersistentFlags().StringVarP(&Config.Primary, "primary", "P", "", "指定配置关键字")
 }
 
-func Client(args []string) bool {
-	if err := FlagSet.Parse(args); err != nil {
-		return false
-	}
-
+func Client(cmd *cobra.Command, args []string) {
 	var err error
 	File, err = os.Create("client.log")
 	if err != nil {
@@ -77,7 +77,6 @@ func Client(args []string) bool {
 	default:
 		log.Println("-a 参数无效,-h 查看帮助命令.")
 	}
-	return true
 }
 
 func parseconfig() {

@@ -4,9 +4,10 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
-	"flag"
 	"log"
 	"os"
+
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -16,17 +17,22 @@ var (
 	Templatedir  string
 	Variables    map[string][]string
 	Pathrelation map[string][]string
-	FlagSet      = flag.FlagSet{Usage: func() {}}
 )
 
+var DeployServer = &cobra.Command{
+	Use:   "server",
+	Short: "快速部署服务端",
+	RunE:  Server,
+}
+
 func init() {
-	FlagSet.StringVar(&cpath, "c", "", "-c cfg.json 从文件读取配置")
-	FlagSet.StringVar(&Cfg.IP, "l", ":1789", "-l 127.0.0.1;1789 指定监听的IP端口")
-	FlagSet.StringVar(&Cfg.Proto, "p", "http", "-p http 指定协议类型,http,https")
-	FlagSet.StringVar(&Cfg.CrtPath, "crt", "", "-crt tool.crt 指定https的crt文件")
-	FlagSet.StringVar(&Cfg.Keypath, "key", "", "-key 指定https的key文件")
-	FlagSet.StringVar(&Cfg.Logname, "log", "run.log", "-log run.log 指定log名称路径")
-	FlagSet.StringVar(&Cfg.Download, "d", "download", "-d ./download 指定下载文件所在的目录")
+	DeployServer.PersistentFlags().StringVarP(&cpath, "config", "C", "", "从文件读取配置文件")
+	DeployServer.PersistentFlags().StringVarP(&Cfg.IP, "listen", "l", ":1789", "指定监听的地址端口")
+	DeployServer.PersistentFlags().StringVarP(&Cfg.Proto, "proto", "p", "http", "指定通信协议,http|https")
+	DeployServer.PersistentFlags().StringVarP(&Cfg.CrtPath, "crt", "c", "", "指定证书crt文件")
+	DeployServer.PersistentFlags().StringVarP(&Cfg.Keypath, "key", "k", "", "指定证书key文件")
+	DeployServer.PersistentFlags().StringVarP(&Cfg.Logname, "log", "L", "server.log", "指定日志路径")
+	DeployServer.PersistentFlags().StringVarP(&Cfg.Download, "download", "d", "./", "指定下载文件所在的目录")
 }
 
 func readconfig(cfgpath string, cfg *Config) {
